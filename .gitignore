@@ -1,0 +1,6 @@
+node_modules
+.vscode
+TT.json
+atm_enboi.csv
+package.json
+package-lock.json
