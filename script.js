@@ -1,12 +1,43 @@
 import axios from "./node_modules/@bundled-es-modules/axios/axios.js";
 import { DataTable } from "./node_modules/simple-datatables/dist/module/index.js";
+
+
+let selectorMapElement = document.querySelector("#gmap_canvas");
+const myOptions = {
+  zoom: 8,
+  center: new google.maps.LatLng(31.4037192, 33.9606743),
+  mapTypeId: google.maps.MapTypeId.ROADMAP,
+};
+let map = new google.maps.Map(selectorMapElement, myOptions);
+
+const folterTable= (data,value)=>{
+  return data.filter((atm)=>{
+    return atm.City.includes(value)
+  })
+
+}
+
+
+
 const response = axios
   .get("https://data.gov.il/api/3/action/datastore_search?resource_id=b9d690de-0a9c-45ef-9ced-3e5957776b26&limit=500")
   .then((response) => {
     createTableHead(response.data.result.fields);
     createTableBody(response.data.result.records);
     const dataTable = new DataTable(myTable);
-    google.maps.event.addDomListener(window, "load", createGoogleMap(response.data.result.records));
+
+
+
+
+    const dataTableInput=document.querySelector(".dataTable-input")
+    dataTableInput.addEventListener("input",(event)=>{
+      const searchValue=event.target.value
+      let filtered=folterTable(response.data.result.records,event.target.value)
+      selectorMapElement.innerHTML=''
+      map = new google.maps.Map(selectorMapElement, myOptions);
+      createGoogleMap(filtered,map)
+    })
+    google.maps.event.addDomListener(window, "load", createGoogleMap(response.data.result.records,map));
   })
   .catch((err) => console.log(err));
 const myTable = document.querySelector("#myTable");
@@ -35,19 +66,15 @@ const createTableBody = (data) => {
     myTable.appendChild(tBodyEl);
   }
 };
-function createGoogleMap(data) {
+function createGoogleMap(data,map) {
   for (let i = 0; i < data.length; i++) {
-    init_map(data[i]);
+    init_map(data[i],map);
   }
 }
-let selectorMapElement = document.querySelector("#gmap_canvas");
-const myOptions = {
-  zoom: 8,
-  center: new google.maps.LatLng(31.4037192, 33.9606743),
-  mapTypeId: google.maps.MapTypeId.ROADMAP,
-};
-let map = new google.maps.Map(selectorMapElement, myOptions);
-function init_map(dataATMObject) {
+
+
+
+function init_map(dataATMObject,map) {
   let googleMapTitle = `ATM ${dataATMObject.ATM_Address}`;
   let googleMapAddress = `${dataATMObject.ATM_Address}, ${dataATMObject.City}`;
   let googleMapLat = dataATMObject.Y_Coordinate;
